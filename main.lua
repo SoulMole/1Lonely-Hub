@@ -1,10 +1,10 @@
-if getgenv().LonelyHub_PF == true then
-    alert("Lonely Hub is already running!")
-    return
-end
+if getgenv().LonelyHub_PF then return end
 
 getgenv().LonelyHub_PF = true
-getgenv().DevMode = true
+local Version = "1.2"
+getgenv().LonelyHub_PF_Version = Version
+local DevMode = false
+getgenv().DevMode = DevMode
 getgenv().SAToggled = false
 
 local themes = {
@@ -34,7 +34,7 @@ local Players = game:GetService("Players")
 local LocalPlayer = game.Players.LocalPlayer
 
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/SoulMole/Lonely-Hub-Kavo-UI-Library/main/source.lua"))()
-local Window = Library.CreateLib("lonely hub", themes)
+local Window = Library.CreateLib("lonely hub | v".. Version, themes)
 
 local SilentAimTab = Window:NewTab("Silent Aim")
 local SilentAimSection = SilentAimTab:NewSection("Silent Aim Settings")
@@ -47,7 +47,6 @@ local AimbotSection = AimbotTab:NewSection("Aimbot")
 
 local EspTab = Window:NewTab("ESP")
 local EspSection = EspTab:NewSection("ESP")
-
 local ESPColorSection = EspTab:NewSection("Colors")
 
 local BindsTab = Window:NewTab("Key Binds")
@@ -55,6 +54,14 @@ local BindsSection = BindsTab:NewSection("Key Binds")
 
 local ColorTab = Window:NewTab("UI Customizatom")
 local ThemeColorSection = ColorTab:NewSection("UI Colors")
+
+local InformationTab = Window:NewTab("Information")
+local InformationSection = InformationTab:NewSection("Information")
+InformationSection:NewLabel("Version: ".. Version)
+InformationSection:NewLabel("Developer Mode: ".. tostring(DevMode))
+InformationSection:NewLabel("Hub Developer: Lonely Planet#0001")
+InformationSection:NewLabel("UI Library: Kavo Library by xHeptic")
+InformationSection:NewLabel("Extra credits: absolutely noone")
 
 local abFOVRingColor = Color3.fromRGB(144, 66, 245)
 local saFOVRingColor = Color3.fromRGB(144, 66, 245)
@@ -66,9 +73,7 @@ for theme, color in pairs(themes) do
     end)
 end
 
-ESPColorSection:NewColorPicker("Box ESP Color", "The box around the enemies color", Color3.fromRGB(144, 66, 245), function(color)
-    ESPColor = color
-end)
+
 
 local function getTeam()
     local localPlayerGhostsTeamName = "Ghosts"
@@ -77,10 +82,6 @@ local function getTeam()
     
     if game.Players.LocalPlayer.Team.Name == localPlayerGhostsTeamName then return playerFolderPhantomsTeamName else return playerFolderGhostsTeamName end
 end
-
-getgenv().ABLoopID = HttpService:GenerateGUID(false)
-getgenv().SALoopID = HttpService:GenerateGUID(false)
-getgenv().ESPLoopID = HttpService:GenerateGUID(false)
 
 local smoothing = 1
 local fov = 500
@@ -373,22 +374,23 @@ function SizeRound(Number, Bracket)
 end
 -- End ESP Functions
 
+local ShowHealthBar = false
+local ShowName = false
+local ShowDistance = false
+local FontColor = Color3.fromRGB(255, 255, 255)
+
+
 EspSection:NewToggle("Enabled", "", function(state)
     if state then
         ESPElementsList = {}
         espLoop = RunService.RenderStepped:Connect(function()
-            
-
             for i,v in pairs(ESPElementsList) do
                 if v then
                     v:Remove()
                 end
             end
-            
-            local team = getTeam()
 
             ESPElementsList = {}
-            -- Removed Code ID:001
             for Index, Player in pairs(Players:GetPlayers()) do
                 if Player == LocalPlayer then continue end
                 
@@ -401,18 +403,13 @@ EspSection:NewToggle("Enabled", "", function(state)
 
                 if BodyParts and PlayerAlive and Health and IsEnemy then
                     local HealthPercent = (Health.CurrentHealth / Health.MaxHealth)
-                    local Distance = GetDistanceFromClient(BodyParts.Root.Position)
+                    local ClientDistance = GetDistanceFromClient(BodyParts.Root.Position)
                     ScreenPosition, OnScreen = GetScreenPosition(BodyParts.Root.Position)
                     local Orientation, Size = BodyParts.Character:GetBoundingBox()
-                    print(1)
                     local Height = (Workspace.CurrentCamera.CFrame - Workspace.CurrentCamera.CFrame.Position) * Vector3.new(0, (math.clamp(Size.Y, 1, 10) + 0.5) / 2, 0)
-                    print(2)
                     Height = math.abs(Workspace.CurrentCamera:WorldToScreenPoint(Orientation.Position + Height).Y - Workspace.CurrentCamera:WorldToScreenPoint(Orientation.Position - Height).Y)
-                    print(3)
                     Size = SizeRound(Vector2.new((Height / 2), Height))
-                    print(4)
                     if OnScreen then
-                        -- Box
                         local BoxOutline = Drawing.new("Square")   
                         BoxOutline.Visible = true
                         BoxOutline.Thickness = 3
@@ -420,8 +417,6 @@ EspSection:NewToggle("Enabled", "", function(state)
                         BoxOutline.Color = Color3.fromRGB(0, 0, 0)
                         BoxOutline.Position = (Vector2.new(ScreenPosition.X, ScreenPosition.Y) - (Size / 2))
                         BoxOutline.Size = Size
-
-                        ESPElementsList[#ESPElementsList+1] = BoxOutline
 
                         local Box = Drawing.new("Square")   
                         Box.Visible = true
@@ -431,45 +426,65 @@ EspSection:NewToggle("Enabled", "", function(state)
                         Box.Position = BoxOutline.Position
                         Box.Size = Size
 
-                        ESPElementsList[#ESPElementsList+1] = Box
-
-                        -- HealthBar
                         local HealthBarOBJOutline = Drawing.new("Square")
-                        HealthBarOBJOutline.Visible = true
+                        HealthBarOBJOutline.Visible = false
                         HealthBarOBJOutline.Thickness = 3
                         HealthBarOBJOutline.Transparency = 1
                         HealthBarOBJOutline.Filled = true
                         HealthBarOBJOutline.Color = Color3.fromRGB(0, 0, 0)
                         HealthBarOBJOutline.Size = Vector2.new(4, (Box.Size.Y + 2))
-                        HealthBarOBJOutline.Position = (Vector2.new(Box.Position.X, Box.Position.Y) - Vector2.new(2, 0))
-
-                        ESPElementsList[#ESPElementsList+1] = HealthBarOBJOutline
+                        HealthBarOBJOutline.Position = (Vector2.new(Box.Position.X - (BoxOutline.Thickness + 1), Box.Position.Y) - Vector2.new(2, 0))
 
                         local HealthBarOBJ = Drawing.new("Square")
-                        HealthBarOBJ.Visible = true
-                        HealthBarOBJ.Thickness = 3
+                        HealthBarOBJ.Visible = false
+                        HealthBarOBJ.Thickness = 2
                         HealthBarOBJ.Transparency = 1
                         HealthBarOBJ.Filled = true
                         HealthBarOBJ.Color = HealthbarLerp(HealthPercent)
                         HealthBarOBJ.Size = Vector2.new(2, (-Box.Size.Y * HealthPercent))
-                        HealthBarOBJ.Position = Vector2.new((Box.Position.X - (BoxOutline.Thickness + 1)), (Box.Position.Y + Box.Size.Y))
+                        HealthBarOBJ.Position = (Vector2.new((Box.Position.X - (BoxOutline.Thickness + 1)), (Box.Position.Y + Box.Size.Y)) - Vector2.new(2, 0))
 
-                        ESPElementsList[#ESPElementsList+1] = HealthBarOBJ
-
-                        -- Name
                         local Name = Drawing.new("Text")
-                        Name.Visible = true
+                        Name.Visible = false
                         Name.Transparency = 1
                         Name.Center = true
                         Name.Outline = true
                         Name.Font = 2
                         Name.Size = 10
-                        Name.Color = ESPColor
+                        Name.Color = FontColor
                         Name.OutlineColor = Color3.new(0,0,0)
                         Name.Text = Player.Name
                         Name.Position = Vector2.new(((Box.Size.X / 2) + Box.Position.X), ((ScreenPosition.Y - Box.Size.Y / 2) - 18))
+
+                        local Distance = Drawing.new("Text")
+                        Distance.Visible = false
+                        Distance.Transparency = 1
+                        Distance.Center = true
+                        Distance.Outline = true
+                        Distance.Font = 2
+                        Distance.Size = 10
+                        Distance.Color = FontColor
+                        Distance.OutlineColor = Color3.new(0,0,0)
+                        Distance.Text = string.format("(%dm) (%d/%d)", ClientDistance, Health.CurrentHealth, Health.MaxHealth)
+                        Distance.Position = Vector2.new(((Box.Size.X / 2) + Box.Position.X), ((ScreenPosition.Y + Box.Size.Y / 2) + 18))
                         
+                        if ShowHealthBar then
+                            HealthBarOBJOutline.Visible = true
+                            HealthBarOBJ.Visible = true
+                        end
+                        if ShowName then
+                            Name.Visible = true
+                        end
+                        if ShowDistance then
+                            Distance.Visible = true
+                        end
+
+                        ESPElementsList[#ESPElementsList+1] = BoxOutline
+                        ESPElementsList[#ESPElementsList+1] = Box
+                        ESPElementsList[#ESPElementsList+1] = HealthBarOBJOutline
+                        ESPElementsList[#ESPElementsList+1] = HealthBarOBJ
                         ESPElementsList[#ESPElementsList+1] = Name
+                        ESPElementsList[#ESPElementsList+1] = Distance
                     end
                 end
             end
@@ -481,6 +496,22 @@ EspSection:NewToggle("Enabled", "", function(state)
         end
         ESPElementsList = {}
     end
+end)
+
+EspSection:NewToggle("Show Health", "Shows a health bar on the left of the player", function(state)
+    ShowHealthBar = state
+end)
+EspSection:NewToggle("Show Names", "Shows the players name above the player", function(state)
+    ShowName = state
+end)
+EspSection:NewToggle("Show Extra Info", "Shows the distance and health", function(state)
+    ShowDistance = state
+end)
+ESPColorSection:NewColorPicker("Box Color", "The box around the enemies color", Color3.fromRGB(144, 66, 245), function(color)
+    ESPColor = color
+end)
+ESPColorSection:NewColorPicker("Font Color", "The font color of the name and distance.", Color3.fromRGB(255, 255, 255), function(color)
+    FontColor = color
 end)
 
 if getgenv().DevMode then
