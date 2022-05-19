@@ -1,4 +1,10 @@
+if getgenv().LonelyHub_PF == false then
+    getgenv().LonelyHub_PF = {}
+end
+
+getgenv().LonelyHub_PF = true
 getgenv().DevMode = true
+getgenv().SAToggled = false
 
 local themes = {
     SchemeColor = Color3.fromRGB(144, 66, 245),
@@ -8,17 +14,30 @@ local themes = {
     ElementColor = Color3.fromRGB(47, 49, 54)
 }
 
-getgenv().SAToggled = false
+local function LoadStringUrl(URL)
+
+    local Source
+    local Success, Error = pcall(function() Source = game:HttpGet(URL) end)
+    
+    if Source and Success then
+        return loadstring(Source)()
+    end
+    
+    return Source, true
+end
 
 local RunService = game:GetService("RunService")
+local HttpService = game:GetService("HttpService")
 local UserInputService = game:GetService("UserInputService")
 local Players = game:GetService("Players")
+local LocalPlayer = game.Players.LocalPlayer
 
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/SoulMole/Lonely-Hub-Kavo-UI-Library/main/source.lua"))()
 local Window = Library.CreateLib("lonely hub", themes)
 
 local SilentAimTab = Window:NewTab("Silent Aim")
 local SilentAimSection = SilentAimTab:NewSection("Silent Aim Settings")
+local FOVSilentAimSection = SilentAimTab:NewSection("FOV Circle Settings")
 local SAWallBangSection = SilentAimTab:NewSection("Wall Bang Settings")
 local SAPanicSection = SilentAimTab:NewSection("Panic Settings")
 
@@ -26,19 +45,18 @@ local AimbotTab = Window:NewTab("Aimbot")
 local AimbotSection = AimbotTab:NewSection("Aimbot")
 
 local EspTab = Window:NewTab("ESP")
-local EspSection = EspTab:NewSection("ESP") 
+local EspSection = EspTab:NewSection("ESP")
+
+local ESPColorSection = EspTab:NewSection("Colors")
 
 local BindsTab = Window:NewTab("Key Binds")
 local BindsSection = BindsTab:NewSection("Key Binds")
 
-local ColorTab = Window:NewTab("Color")
-local ESPColorSection = ColorTab:NewSection("ESP Colors")
-local FOVRingColorSection = ColorTab:NewSection("Ring Colors")
-local ThemeColorSection = ColorTab:NewSection("Theme Colors")
+local ColorTab = Window:NewTab("UI Customizatom")
+local ThemeColorSection = ColorTab:NewSection("UI Colors")
 
-
-
-local FOVRingColor = Color3.fromRGB(144, 66, 245)
+local abFOVRingColor = Color3.fromRGB(144, 66, 245)
+local saFOVRingColor = Color3.fromRGB(144, 66, 245)
 local ESPColor = Color3.fromRGB(144, 66, 245)
 
 for theme, color in pairs(themes) do
@@ -46,10 +64,6 @@ for theme, color in pairs(themes) do
         Library:ChangeColor(theme, color3)
     end)
 end
-
-FOVRingColorSection:NewColorPicker("FOV Ring Color", "The color of the visual ring.", Color3.fromRGB(144, 66, 245), function(color)
-    FOVRingColor = color
-end)
 
 ESPColorSection:NewColorPicker("Box ESP Color", "The box around the enemies color", Color3.fromRGB(144, 66, 245), function(color)
     ESPColor = color
@@ -62,6 +76,10 @@ local function getTeam()
     
     if game.Players.LocalPlayer.Team.Name == localPlayerGhostsTeamName then return playerFolderPhantomsTeamName else return playerFolderGhostsTeamName end
 end
+
+getgenv().ABLoopID = HttpService:GenerateGUID(false)
+getgenv().SALoopID = HttpService:GenerateGUID(false)
+getgenv().ESPLoopID = HttpService:GenerateGUID(false)
 
 local smoothing = 1
 local fov = 500
@@ -78,6 +96,8 @@ local function isPointVisible(targetForWallCheck, mw)
     return #result <= mw
 end
 local abLoop
+
+local SnapFOVRing = false
 AimbotSection:NewToggle("Enabled", "Toggles whether aimbot is on or not.", function(state)
     if state then
         FOVringList = {}
@@ -94,7 +114,11 @@ AimbotSection:NewToggle("Enabled", "Toggles whether aimbot is on or not.", funct
             FOVringOutline.Radius = fov / workspace.CurrentCamera.FieldOfView
             FOVringOutline.Transparency = 1
             FOVringOutline.Color = Color3.fromRGB(0, 0, 0)
-            FOVringOutline.Position = game.Workspace.CurrentCamera.ViewportSize/2
+            if (SnapFOVRing) then
+                FOVringOutline.Position = UserInputService:GetMouseLocation()
+            else
+                FOVringOutline.Position = game.Workspace.CurrentCamera.ViewportSize/2
+            end
             
             FOVringList[#FOVringList+1] = FOVringOutline
 
@@ -103,8 +127,12 @@ AimbotSection:NewToggle("Enabled", "Toggles whether aimbot is on or not.", funct
             FOVring.Thickness = 2
             FOVring.Radius = fov / workspace.CurrentCamera.FieldOfView
             FOVring.Transparency = 1
-            FOVring.Color = FOVRingColor
-            FOVring.Position = game.Workspace.CurrentCamera.ViewportSize/2
+            FOVring.Color = abFOVRingColor
+            if (SnapFOVRing) then
+                FOVring.Position = UserInputService:GetMouseLocation()
+            else
+                FOVring.Position = game.Workspace.CurrentCamera.ViewportSize/2
+            end
             
             FOVringList[#FOVringList+1] = FOVring
             
@@ -141,9 +169,14 @@ AimbotSection:NewToggle("Enabled", "Toggles whether aimbot is on or not.", funct
     end
 end)
 
+
+
 AimbotSection:NewToggle("Wall Check", "Toggles the wall check option", function(state) wallCheck = state end)
 AimbotSection:NewSlider("Max Wallbangs", "The max ammount of wallbangs to attempt", 10, 0, function(s) maxWalls = s end)
 AimbotSection:NewSlider("FOV Size", "The size of the FOV to target players", 50000, 500, function(s) fov = s end)
+AimbotSection:NewToggle("FOV Ring Snap to cursor", "Fixes the fov ring to cursor", function(state)
+    SnapFOVRing = state
+end)
 AimbotSection:NewSlider("Smoothing", "The smoothness of the aimbot", 300, 100, function(s) smoothing = s/100 end)
 AimbotSection:NewDropdown("Target Part", "The humanoid part to target to", {"Head", "Torso", "Right Arm", "Left Arm", "Right Leg", "Left Leg"}, function(currentOption) abTargetPart = currentOption end)
 
@@ -156,6 +189,7 @@ local saWallBangs = 0
 local gunCF
 local motor
 local saFovRingList = {}
+local saSnapFOVRing
 
 saLoop = RunService.RenderStepped:Connect(function()
     for i,v in pairs(saFovRingList) do
@@ -169,7 +203,11 @@ saLoop = RunService.RenderStepped:Connect(function()
     FOVringOutline.Radius = safov / workspace.CurrentCamera.FieldOfView
     FOVringOutline.Transparency = 1
     FOVringOutline.Color = Color3.fromRGB(0, 0, 0)
-    FOVringOutline.Position = game.Workspace.CurrentCamera.ViewportSize/2
+    if (saSnapFOVRing) then
+        FOVringOutline.Position = UserInputService:GetMouseLocation()
+    else
+        FOVringOutline.Position = game.Workspace.CurrentCamera.ViewportSize/2
+    end
     
     saFovRingList[#saFovRingList+1] = FOVringOutline
 
@@ -178,8 +216,12 @@ saLoop = RunService.RenderStepped:Connect(function()
     FOVring.Thickness = 2
     FOVring.Radius = safov / workspace.CurrentCamera.FieldOfView
     FOVring.Transparency = 1
-    FOVring.Color = FOVRingColor
-    FOVring.Position = game.Workspace.CurrentCamera.ViewportSize/2
+    FOVring.Color = saFOVRingColor
+    if (saSnapFOVRing) then
+        FOVring.Position = UserInputService:GetMouseLocation()
+    else
+        FOVring.Position = game.Workspace.CurrentCamera.ViewportSize/2
+    end
             
     saFovRingList[#saFovRingList+1] = FOVring
     
@@ -232,28 +274,110 @@ end)
 
 SAWallBangSection:NewToggle("Wall Check", "", function(state) saWallCheck = state end)
 SAWallBangSection:NewSlider("Max Wallbangs", "Inclusive", 10, 0, function(s) saWallBangs = s end)
-SilentAimSection:NewSlider("Fov", "", 50000, 500, function(s) safov = s end)
+
+FOVSilentAimSection:NewSlider("Size", "", 50000, 500, function(s) safov = s end)
+FOVSilentAimSection:NewToggle("Centered on Cursor", "Fixes the fov ring to cursor", function(state)
+    saSnapFOVRing = state
+end)
+FOVSilentAimSection:NewColorPicker("Color", "The color of the visual ring.", Color3.fromRGB(144, 66, 245), function(color)
+    saFOVRingColor = color
+end)
+
 SilentAimSection:NewDropdown("Target Part", "", {"Head", "Torso", "Right Arm", "Left Arm", "Right Leg", "Left Leg"}, function(currentOption)saTargetPart = currentOption end)
 SAPanicSection:NewToggle("Panic Mode", "Will track closest player if they are within panic distance", function(state) panicMode = state end)
 SAPanicSection:NewSlider("Panic Distance", "", 40, 5, function(s) panicDistance = s end)
--- ESP Shit
 
-
-
--- local CIELUVInterpolator = LoadFile("utilities/cieluv_interpolator.lua")
--- local HealthbarLerp = CIELUVInterpolator:Lerp(Color3.fromRGB(255, 0, 0), Color3.fromRGB(0, 255, 0))
-
--- local HealthPercent = (70 / 100)
+CIELUVInterpolator = LoadStringUrl("https://raw.githubusercontent.com/SoulMole/1Lonely-Hub/master/utils/cieluv_interpolator.lua?token=GHSAT0AAAAAABRMJUUUAIOIAU4TZN4BFVLKYUF3VIA")
+local HealthbarLerp = CIELUVInterpolator:Lerp(Color3.fromRGB(255, 71, 71), Color3.fromRGB(71, 255, 71))
 
 local ESPElementsList = {}
 local width = 3
 local height = 5
 
 local espLoop
+-- ESP Functions
+local Replication, HUD
+for Index, Value in pairs(getgc(true)) do
+    if typeof(Value) == "table" then 
+        if rawget(Value, "getbodyparts") then
+            Replication = Value
+        end
+
+        if rawget(Value, "getplayerhealth") then
+            HUD = Value
+        end
+    end
+end
+
+function IsPlayerAlive(Player)
+    return HUD:isplayeralive(Player)
+end
+
+function GetHealth(Player)
+    local PlayerHealth = HUD:getplayerhealth(Player)
+
+    if PlayerHealth then
+        return {
+            CurrentHealth = math.floor(PlayerHealth),
+            MaxHealth = 100
+        }
+    end
+end
+
+function GetBodyParts(Player)
+    local BodyParts = Replication.getbodyparts(Player)
+
+    if BodyParts and BodyParts.torso then
+        return {
+            Character = BodyParts.torso.Parent,
+            Head = BodyParts.head,
+            Root = BodyParts.torso,
+            Torso = BodyParts.torso,
+            LeftArm = BodyParts.larm,
+            RightArm = BodyParts.rarm,
+            LeftLeg = BodyParts.lleg,
+            RightLeg = BodyParts.rleg
+        }
+    end
+end
+
+function IsOnClientTeam(Player)
+    if LocalPlayer.Team == Player.Team then
+        return true
+    end
+
+    return false
+end
+
+function GetDistanceFromClient(Position)
+    return LocalPlayer:DistanceFromCharacter(Position)
+end
+
+function GetScreenPosition(Position)
+    local Position, Visible = Workspace.CurrentCamera:WorldToViewportPoint(Position)
+    local FullPosition = Position
+    Position = Vector2.new(Position.X, Position.Y)
+
+    return Position, Visible, FullPosition
+end
+
+function SizeRound(Number, Bracket)
+    Bracket = (Bracket or 1)
+
+    if typeof(Number) == "Vector2" then
+        return Vector2.new(SizeRound(Number.X), SizeRound(Number.Y))
+    else
+        return (Number - Number % (Bracket or 1))
+    end
+end
+-- End ESP Functions
+
 EspSection:NewToggle("Enabled", "", function(state)
     if state then
         ESPElementsList = {}
         espLoop = RunService.RenderStepped:Connect(function()
+            
+
             for i,v in pairs(ESPElementsList) do
                 if v then
                     v:Remove()
@@ -263,61 +387,86 @@ EspSection:NewToggle("Enabled", "", function(state)
             local team = getTeam()
 
             ESPElementsList = {}
-            if game.Workspace.Players:FindFirstChild(team) then
-                for i,v in pairs(game.Workspace.Players:FindFirstChild(team):GetChildren()) do
-                    
-                    local BoxSize = Vector2.new(100, 200)
-                    local pos = v.PrimaryPart.Position
-                    local ScreenSpacePos, IsOnScreen = game.Workspace.CurrentCamera:WorldToViewportPoint(pos)
-                    
-                    Body = game.Workspace.CurrentCamera:WorldToViewportPoint(v.Torso.CFrame:PointToWorldSpace(Vector3.new(0, height/2, 0)))
-                    a = game.Workspace.CurrentCamera:WorldToViewportPoint(v.Torso.CFrame:PointToWorldSpace(Vector3.new(width/2, height/2, 0)))
-                    b = game.Workspace.CurrentCamera:WorldToViewportPoint(v.Torso.CFrame:PointToWorldSpace(Vector3.new(-width/2, height/2, 0)))
-                    c = game.Workspace.CurrentCamera:WorldToViewportPoint(v.Torso.CFrame:PointToWorldSpace(Vector3.new(-width/2, -height/2, 0)))
-                    d = game.Workspace.CurrentCamera:WorldToViewportPoint(v.Torso.CFrame:PointToWorldSpace(Vector3.new(width/2, -height/2, 0)))
-                    
-                    Body = Vector2.new(Body.X, Body.Y)
-                    a = Vector2.new(a.X, a.Y)
-                    b = Vector2.new(b.X, b.Y)
-                    c = Vector2.new(c.X, c.Y)
-                    d = Vector2.new(d.X, d.Y)
-                    
-                    if IsOnScreen then
-                        local BoxOutline = Drawing.new("Quad")   
+            -- Removed Code ID:001
+            for Index, Player in pairs(Players:GetPlayers()) do
+                if Player == LocalPlayer then continue end
+                
+                local OnScreen, IsEnemy = false, true
+                local PlayerAlive = IsPlayerAlive(Player)
+                local Health = GetHealth(Player)
+                local BodyParts = GetBodyParts(Player)
+                local OnClientTeam = IsOnClientTeam(Player)
+                if OnClientTeam then IsEnemy = false end
+
+                if BodyParts and PlayerAlive and Health and IsEnemy then
+                    local HealthPercent = (Health.CurrentHealth / Health.MaxHealth)
+                    local Distance = GetDistanceFromClient(BodyParts.Root.Position)
+                    ScreenPosition, OnScreen = GetScreenPosition(BodyParts.Root.Position)
+                    local Orientation, Size = BodyParts.Character:GetBoundingBox()
+                    print(1)
+                    local Height = (Workspace.CurrentCamera.CFrame - Workspace.CurrentCamera.CFrame.Position) * Vector3.new(0, (math.clamp(Size.Y, 1, 10) + 0.5) / 2, 0)
+                    print(2)
+                    Height = math.abs(Workspace.CurrentCamera:WorldToScreenPoint(Orientation.Position + Height).Y - Workspace.CurrentCamera:WorldToScreenPoint(Orientation.Position - Height).Y)
+                    print(3)
+                    Size = SizeRound(Vector2.new((Height / 2), Height))
+                    print(4)
+                    if OnScreen then
+                        -- Box
+                        local BoxOutline = Drawing.new("Square")   
                         BoxOutline.Visible = true
                         BoxOutline.Thickness = 3
                         BoxOutline.Transparency = 1
                         BoxOutline.Color = Color3.fromRGB(0, 0, 0)
-                        BoxOutline.PointA = a
-                        BoxOutline.PointB = b
-                        BoxOutline.PointC = c
-                        BoxOutline.PointD = d
+                        BoxOutline.Position = (Vector2.new(ScreenPosition.X, ScreenPosition.Y) - (Size / 2))
+                        BoxOutline.Size = Size
 
                         ESPElementsList[#ESPElementsList+1] = BoxOutline
 
-                        local Box = Drawing.new("Quad")   
+                        local Box = Drawing.new("Square")   
                         Box.Visible = true
                         Box.Thickness = 2
                         Box.Transparency = 1
                         Box.Color = ESPColor
-                        Box.PointA = a
-                        Box.PointB = b
-                        Box.PointC = c
-                        Box.PointD = d
+                        Box.Position = BoxOutline.Position
+                        Box.Size = Size
 
                         ESPElementsList[#ESPElementsList+1] = Box
 
+                        -- HealthBar
+                        local HealthBarOBJOutline = Drawing.new("Square")
+                        HealthBarOBJOutline.Visible = true
+                        HealthBarOBJOutline.Thickness = 3
+                        HealthBarOBJOutline.Transparency = 1
+                        HealthBarOBJOutline.Filled = true
+                        HealthBarOBJOutline.Color = Color3.fromRGB(0, 0, 0)
+                        HealthBarOBJOutline.Size = Vector2.new(4, (Box.Size.Y + 2))
+                        HealthBarOBJOutline.Position = (Vector2.new(Box.Position.X, Box.Position.Y) - Vector2.new(2, 0))
+
+                        ESPElementsList[#ESPElementsList+1] = HealthBarOBJOutline
+
+                        local HealthBarOBJ = Drawing.new("Square")
+                        HealthBarOBJ.Visible = true
+                        HealthBarOBJ.Thickness = 3
+                        HealthBarOBJ.Transparency = 1
+                        HealthBarOBJ.Filled = true
+                        HealthBarOBJ.Color = HealthbarLerp(HealthPercent)
+                        HealthBarOBJ.Size = Vector2.new(2, (-Box.Size.Y * HealthPercent))
+                        HealthBarOBJ.Position = Vector2.new((Box.Position.X - (BoxOutline.Thickness + 1)), (Box.Position.Y + Box.Size.Y))
+
+                        ESPElementsList[#ESPElementsList+1] = HealthBarOBJ
+
+                        -- Name
                         local Name = Drawing.new("Text")
                         Name.Visible = true
                         Name.Transparency = 1
                         Name.Center = true
                         Name.Outline = true
                         Name.Font = 2
-                        Name.Size = 15
+                        Name.Size = 10
                         Name.Color = ESPColor
                         Name.OutlineColor = Color3.new(0,0,0)
-                        Name.Text = v.Name
-                        Name.Position = Body
+                        Name.Text = Player.Name
+                        Name.Position = Vector2.new(((Box.Size.X / 2) + Box.Position.X), ((ScreenPosition.Y - Box.Size.Y / 2) - 18))
                         
                         ESPElementsList[#ESPElementsList+1] = Name
                     end
