@@ -1,5 +1,6 @@
-if getgenv().LonelyHub_PF == false then
-    getgenv().LonelyHub_PF = {}
+if getgenv().LonelyHub_PF == true then
+    alert("Lonely Hub is already running!")
+    return
 end
 
 getgenv().LonelyHub_PF = true
