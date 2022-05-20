@@ -1,7 +1,7 @@
 if getgenv().LonelyHub_PF then return end
 getgenv().LonelyHub_PF = true
 
-local DevMode = true
+local DevMode = false
 getgenv().DevMode = DevMode
 
 local Version = "1.2"
