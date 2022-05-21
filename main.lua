@@ -2,9 +2,13 @@ if getgenv().LonelyHub_PF then return end
 getgenv().LonelyHub_PF = true
 
 local DevMode = false
-getgenv().DevMode = DevMode
+if getgenv().DevMode then
+    DevMode = true
+else
+    DevMode = false
+end
 
-local Version = "1.2"
+local Version = "1.3"
 if DevMode then Version = Version.." (Dev)" end
 
 getgenv().LonelyHub_PF_Version = Version
@@ -17,19 +21,27 @@ local themes = {
     ElementColor = Color3.fromRGB(47, 49, 54)
 }
 
+local CoolName = "lonely hub"
+
+if getgenv().SonnyHub then
+    themes.SchemeColor = Color3.fromRGB(243, 120, 49)
+    CoolName = "sonny hub"
+end
+
+
 local camera = game:GetService("Workspace").CurrentCamera
 
 local WaterMark = Drawing.new("Text")
 WaterMark.Visible = true
 WaterMark.Transparency = 1
 WaterMark.Outline = true
-WaterMark.Font = 2
+WaterMark.Font = 1
 WaterMark.Size = 17.5
 WaterMark.Center = true
 WaterMark.OutlineColor = Color3.new(0,0,0)
-WaterMark.Color = Color3.fromRGB(144, 66, 245)
+WaterMark.Color = themes.SchemeColor
 WaterMark.Position = Vector2.new((camera.ViewportSize.X/2), 25)
-WaterMark.Text = "lonely hub | v"..Version.." | by: Lonely Planet#0001"
+WaterMark.Text = CoolName.." | v"..Version.." | by: Lonely Planet#0001"
 
 getgenv().SAToggled = false
 
@@ -52,7 +64,7 @@ local Players = game:GetService("Players")
 local LocalPlayer = game.Players.LocalPlayer
  
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/SoulMole/Lonely-Hub-Kavo-UI-Library/main/source.lua"))()
-local Window = Library.CreateLib("lonely hub | v".. Version, themes)
+local Window = Library.CreateLib(CoolName.." | v".. Version, themes)
 
 local SilentAimTab = Window:NewTab("Silent Aim")
 local SilentAimSection = SilentAimTab:NewSection("Silent Aim Settings")
@@ -68,10 +80,13 @@ local ABWallBangSection = AimbotTab:NewSection("Wall Bang Settings")
 local CombatTab = Window:NewTab("Combat")
 local CombatSection = CombatTab:NewSection("Combat")
 
-local EspTab = Window:NewTab("ESP")
-local EspSection = EspTab:NewSection("ESP Settings")
-local EspOptionsSection = EspTab:NewSection("ESP Extras")
-local ESPColorSection = EspTab:NewSection("ESP Colors")
+local MovementTab = Window:NewTab("Movement")
+local MovementSection = MovementTab:NewSection("Movement")
+
+local VisualsTab = Window:NewTab("Visuals")
+local EspSection = VisualsTab:NewSection("ESP Settings")
+local EspOptionsSection = VisualsTab:NewSection("ESP Extras")
+local ESPColorSection = VisualsTab:NewSection("ESP Colors")
 
 local BindsTab = Window:NewTab("Key Binds")
 local BindsSection = BindsTab:NewSection("Key Binds")
@@ -87,8 +102,8 @@ InformationSection:NewLabel("Hub Developer: Lonely Planet#0001")
 InformationSection:NewLabel("UI Library: Kavo Library by xHeptic")
 InformationSection:NewLabel("Extra credits: absolutely noone")
 
-local abFOVRingColor = Color3.fromRGB(144, 66, 245)
-local saFOVRingColor = Color3.fromRGB(144, 66, 245)
+local abFOVRingColor = themes.SchemeColor
+local saFOVRingColor = themes.SchemeColor
 
 
 for theme, color in pairs(themes) do
@@ -111,6 +126,14 @@ local wallCheck = false
 local maxWalls = 0
 local abTargetPart = "Head"
 local FOVringList = {}
+
+local function isPointVisible2(targetForWallCheck, mw)
+    local castPoints = {targetForWallCheck.Position}
+    local ignoreList = {targetForWallCheck, game.Players.LocalPlayer.Character, game.Workspace.CurrentCamera}
+    local result = workspace.CurrentCamera:GetPartsObscuringTarget(castPoints, ignoreList)
+    
+    return #result <= mw
+end
 
 local function isPointVisible(targetForWallCheck, mw)
     local castPoints = {targetForWallCheck.PrimaryPart.Position}
@@ -201,7 +224,7 @@ FOVAimbotSection:NewSlider("Size", "", 50000, 500, function(s) fov = s end)
 FOVAimbotSection:NewToggle("Centered on Cursor", "Fixes the fov ring to cursor", function(state)
     abSnapFOVRing = state
 end)
-FOVAimbotSection:NewColorPicker("Color", "The color of the visual ring.", Color3.fromRGB(144, 66, 245), function(color)
+FOVAimbotSection:NewColorPicker("Color", "The color of the visual ring.", themes.SchemeColor, function(color)
     abFOVRingColor = color
 end)
 AimbotSection:NewSlider("Smoothing", "The smoothness of the aimbot", 300, 100, function(s) smoothing = s/100 end)
@@ -306,7 +329,7 @@ FOVSilentAimSection:NewSlider("Size", "", 50000, 500, function(s) safov = s end)
 FOVSilentAimSection:NewToggle("Centered on Cursor", "Fixes the fov ring to cursor", function(state)
     saSnapFOVRing = state
 end)
-FOVSilentAimSection:NewColorPicker("Color", "The color of the visual ring.", Color3.fromRGB(144, 66, 245), function(color)
+FOVSilentAimSection:NewColorPicker("Color", "The color of the visual ring.", themes.SchemeColor, function(color)
     saFOVRingColor = color
 end)
 
@@ -406,7 +429,7 @@ local ShowName = false
 local ShowTeam = false
 local ShowDistance = false
 local FontColor = Color3.fromRGB(255, 255, 255)
-local ESPColor = Color3.fromRGB(144, 66, 245)
+local ESPColor = themes.SchemeColor
 local TeamColor = Color3.fromRGB(68, 255, 162)
 
 EspSection:NewToggle("Enabled", "", function(state)
@@ -452,7 +475,8 @@ EspSection:NewToggle("Enabled", "", function(state)
                     
                         local BoxOutline = Drawing.new("Square")   
                         BoxOutline.Visible = true
-                        BoxOutline.Thickness = 3
+                        BoxOutline.Thickness = 2
+                        BoxOutline.Filled = false
                         BoxOutline.Transparency = ESPTransparency
                         BoxOutline.Color = Color3.fromRGB(0, 0, 0)
                         BoxOutline.Position = (Vector2.new(ScreenPosition.X, ScreenPosition.Y) - (Size / 2))
@@ -460,7 +484,8 @@ EspSection:NewToggle("Enabled", "", function(state)
 
                         local Box = Drawing.new("Square")   
                         Box.Visible = true
-                        Box.Thickness = 2
+                        Box.Thickness = 1
+                        Box.Filled = false
                         Box.Transparency = ESPTransparency
                         Box.Color = MainESPColor
                         Box.Position = BoxOutline.Position
@@ -472,7 +497,7 @@ EspSection:NewToggle("Enabled", "", function(state)
                         HealthBarOBJOutline.Transparency = ESPTransparency
                         HealthBarOBJOutline.Filled = true
                         HealthBarOBJOutline.Color = Color3.fromRGB(0, 0, 0)
-                        HealthBarOBJOutline.Size = Vector2.new(4, (Box.Size.Y + 2))
+                        HealthBarOBJOutline.Size = Vector2.new(3, (Box.Size.Y + 2))
                         HealthBarOBJOutline.Position = (Vector2.new(Box.Position.X - (BoxOutline.Thickness + 1), Box.Position.Y) - Vector2.new(2, 0))
 
                         local HealthBarOBJ = Drawing.new("Square")
@@ -482,15 +507,15 @@ EspSection:NewToggle("Enabled", "", function(state)
                         HealthBarOBJ.Filled = true
                         HealthBarOBJ.Color = HealthbarLerp(HealthPercent)
                         HealthBarOBJ.Size = Vector2.new(2, (-Box.Size.Y * HealthPercent))
-                        HealthBarOBJ.Position = (Vector2.new((Box.Position.X - (BoxOutline.Thickness + 1)), (Box.Position.Y + Box.Size.Y)) - Vector2.new(2, 0))
+                        HealthBarOBJ.Position = (Vector2.new(Box.Position.X - (BoxOutline.Thickness + 1), (Box.Position.Y + Box.Size.Y)) - Vector2.new(2, 0))
 
                         local Name = Drawing.new("Text")
                         Name.Visible = false
                         Name.Transparency = ESPTransparency
                         Name.Center = true
                         Name.Outline = true
-                        Name.Font = 2
-                        Name.Size = 10
+                        Name.Font = 1
+                        Name.Size = 15
                         Name.Color = FontColor
                         Name.OutlineColor = Color3.new(0,0,0)
                         Name.Text = Player.Name
@@ -501,25 +526,25 @@ EspSection:NewToggle("Enabled", "", function(state)
                         Distance.Transparency = ESPTransparency
                         Distance.Center = true
                         Distance.Outline = true
-                        Distance.Font = 2
-                        Distance.Size = 10
+                        Distance.Font = 1
+                        Distance.Size = 15
                         Distance.Color = FontColor
                         Distance.OutlineColor = Color3.new(0,0,0)
-                        Distance.Text = string.format("(%dm) (%d/%d)", ClientDistance, Health.CurrentHealth, Health.MaxHealth)
+                        Distance.Text = string.format("%d studs", ClientDistance)
                         Distance.Position = Vector2.new(((Box.Size.X / 2) + Box.Position.X), ((ScreenPosition.Y + Box.Size.Y / 2) + 18))
                         
                         local TracerOutline = Drawing.new("Line")
                         TracerOutline.Visible = false
                         TracerOutline.Transparency = ESPTransparency
-                        TracerOutline.Thickness = 3
+                        TracerOutline.Thickness = 2
                         TracerOutline.Color = Color3.fromRGB(0, 0, 0)
                         TracerOutline.To = Vector2.new(((Box.Size.X / 2) + Box.Position.X), (ScreenPosition.Y + Box.Size.Y / 2))
                         TracerOutline.From = Vector2.new((camera.ViewportSize.X/2), camera.ViewportSize.Y)
 
                         local Tracer = Drawing.new("Line")
                         Tracer.Visible = false
-                        TracerOutline.Transparency = ESPTransparency
-                        Tracer.Thickness = 2
+                        Tracer.Transparency = ESPTransparency
+                        Tracer.Thickness = 1
                         Tracer.Color = MainESPColor
                         Tracer.To = TracerOutline.To
                         Tracer.From = TracerOutline.From
@@ -573,13 +598,13 @@ end)
 EspOptionsSection:NewToggle("Show Names", "Shows the players name above the player", function(state)
     ShowName = state
 end)
-EspOptionsSection:NewToggle("Show Extra Info", "Shows the distance and health", function(state)
+EspOptionsSection:NewToggle("Show Distance", "Shows the distance under the player", function(state)
     ShowDistance = state
 end)
 EspOptionsSection:NewToggle("Show Teammates", "Shows team mates", function(state)
     ShowTeam = state
 end)
-ESPColorSection:NewColorPicker("Enemy Color", "The box around the enemies color", Color3.fromRGB(144, 66, 245), function(color)
+ESPColorSection:NewColorPicker("Enemy Color", "The box around the enemies color", themes.SchemeColor, function(color)
     ESPColor = color
 end)
 ESPColorSection:NewColorPicker("Team Color", "The box around the enemies color", Color3.fromRGB(68, 255, 162), function(color)
@@ -652,6 +677,39 @@ end)
 CombatSection:NewButton("No Sway", "Removes Sway (Single Use)", function()
     NoSway = true
     EditGunMods()
+end)
+
+
+local WalkSpeed = 0
+local WSMovementSection = MovementTab:NewSection("Walkspeed")
+local WalkSpeedLoop
+WSMovementSection:NewToggle("Enabled", "Sets the walkspeed to the max default", function(state)
+    if state then
+        local Humanoid = game:GetService("Players").LocalPlayer.Character.Humanoid
+        WalkSpeedLoop = Humanoid:GetPropertyChangedSignal("WalkSpeed"):Connect(function()
+            Humanoid.WalkSpeed = Humanoid.WalkSpeed + WalkSpeed;
+        end)
+    else
+        WalkSpeedLoop:Disconnect()
+    end
+end)
+
+WSMovementSection:NewSlider("Increase", "Adds more walk speed to the function", 30, 0, function(val)
+    WalkSpeed = val
+end)
+
+MovementSection:NewToggle("Bunny Hop", "Allows to bunny hop like a retard", function(state)
+    if state then
+        RunService:BindToRenderStep("BhopLoop", 1, function()
+            if not game:GetService('Players').LocalPlayer.Character and game:GetService('Players').LocalPlayer.Character:FindFirstChild('Humanoid') then
+                return
+            end
+            
+            game:GetService('Players').LocalPlayer.Character.Humanoid.Jump = game:GetService('UserInputService'):IsKeyDown(Enum.KeyCode.Space)
+        end)
+    else
+        RunService:UnbindFromRenderStep("BhopLoop")
+    end
 end)
 
 if DevMode then
