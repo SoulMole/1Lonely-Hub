@@ -8,7 +8,7 @@ else
     DevMode = false
 end
 
-local Version = "1.4"
+local Version = "1.5"
 if DevMode then Version = Version.." (Dev)" end
 
 getgenv().LonelyHub_PF_Version = Version
@@ -465,25 +465,15 @@ EspSection:NewToggle("Enabled", "", function(state)
                     local Height = (Workspace.CurrentCamera.CFrame - Workspace.CurrentCamera.CFrame.Position) * Vector3.new(0, (math.clamp(Size.Y, 1, 10) + 0.5) / 2, 0)
                     Height = math.abs(Workspace.CurrentCamera:WorldToScreenPoint(Orientation.Position + Height).Y - Workspace.CurrentCamera:WorldToScreenPoint(Orientation.Position - Height).Y)
                     Size = SizeRound(Vector2.new((Height / 2), Height))
-
-                    local MainESPColor = ESPColor
-                    if OnClientTeam then
-                        MainESPColor = TeamColor
-                    else
-                        MainESPColor = ESPColor
-                    end
-
-                    local BoxOutline
-                    local Box
-                    local HealthBarOBJOutline
-                    local HealthBarOBJ
-                    local Name
-                    local Distance
-                    local TracerOutline
-                    local Tracer
-
-                    if OnScreen then          
-                        BoxOutline = Drawing.new("Square")   
+                    if OnScreen then
+                        local MainESPColor = ESPColor
+                        if OnClientTeam then
+                            MainESPColor = TeamColor
+                        else
+                            MainESPColor = ESPColor
+                        end
+                    
+                        local BoxOutline = Drawing.new("Square")   
                         BoxOutline.Visible = true
                         BoxOutline.Thickness = 2
                         BoxOutline.Filled = false
@@ -492,7 +482,7 @@ EspSection:NewToggle("Enabled", "", function(state)
                         BoxOutline.Position = (Vector2.new(ScreenPosition.X, ScreenPosition.Y) - (Size / 2))
                         BoxOutline.Size = Size
 
-                        Box = Drawing.new("Square")   
+                        local Box = Drawing.new("Square")   
                         Box.Visible = true
                         Box.Thickness = 1
                         Box.Filled = false
@@ -501,7 +491,7 @@ EspSection:NewToggle("Enabled", "", function(state)
                         Box.Position = BoxOutline.Position
                         Box.Size = BoxOutline.Size
 
-                        HealthBarOBJOutline = Drawing.new("Square")
+                        local HealthBarOBJOutline = Drawing.new("Square")
                         HealthBarOBJOutline.Visible = false
                         HealthBarOBJOutline.Thickness = 3
                         HealthBarOBJOutline.Transparency = ESPTransparency
@@ -510,7 +500,7 @@ EspSection:NewToggle("Enabled", "", function(state)
                         HealthBarOBJOutline.Size = Vector2.new(3, (Box.Size.Y + 2))
                         HealthBarOBJOutline.Position = (Vector2.new(Box.Position.X - (BoxOutline.Thickness + 1), Box.Position.Y) - Vector2.new(2, 0))
 
-                        HealthBarOBJ = Drawing.new("Square")
+                        local HealthBarOBJ = Drawing.new("Square")
                         HealthBarOBJ.Visible = false
                         HealthBarOBJ.Thickness = 2
                         HealthBarOBJ.Transparency = ESPTransparency
@@ -519,7 +509,7 @@ EspSection:NewToggle("Enabled", "", function(state)
                         HealthBarOBJ.Size = Vector2.new(2, (-Box.Size.Y * HealthPercent))
                         HealthBarOBJ.Position = (Vector2.new(Box.Position.X - (BoxOutline.Thickness + 1), (Box.Position.Y + Box.Size.Y)) - Vector2.new(2, 0))
 
-                        Name = Drawing.new("Text")
+                        local Name = Drawing.new("Text")
                         Name.Visible = false
                         Name.Transparency = ESPTransparency
                         Name.Center = true
@@ -531,7 +521,7 @@ EspSection:NewToggle("Enabled", "", function(state)
                         Name.Text = Player.Name
                         Name.Position = Vector2.new(((Box.Size.X / 2) + Box.Position.X), ((ScreenPosition.Y - Box.Size.Y / 2) - 18))
 
-                        Distance = Drawing.new("Text")
+                        local Distance = Drawing.new("Text")
                         Distance.Visible = false
                         Distance.Transparency = ESPTransparency
                         Distance.Center = true
@@ -542,7 +532,22 @@ EspSection:NewToggle("Enabled", "", function(state)
                         Distance.OutlineColor = Color3.new(0,0,0)
                         Distance.Text = string.format("%d studs", ClientDistance)
                         Distance.Position = Vector2.new(((Box.Size.X / 2) + Box.Position.X), ((ScreenPosition.Y + Box.Size.Y / 2) + 18))
-                    
+                        
+                        local TracerOutline = Drawing.new("Line")
+                        TracerOutline.Visible = false
+                        TracerOutline.Transparency = ESPTransparency
+                        TracerOutline.Thickness = 2
+                        TracerOutline.Color = Color3.fromRGB(0, 0, 0)
+                        TracerOutline.To = Vector2.new(((Box.Size.X / 2) + Box.Position.X), (ScreenPosition.Y + Box.Size.Y / 2))
+                        TracerOutline.From = Vector2.new((camera.ViewportSize.X/2), camera.ViewportSize.Y)
+
+                        local Tracer = Drawing.new("Line")
+                        Tracer.Visible = false
+                        Tracer.Transparency = ESPTransparency
+                        Tracer.Thickness = 1
+                        Tracer.Color = MainESPColor
+                        Tracer.To = TracerOutline.To
+                        Tracer.From = TracerOutline.From
 
                         if ShowHealthBar then
                             HealthBarOBJOutline.Visible = true
@@ -554,6 +559,10 @@ EspSection:NewToggle("Enabled", "", function(state)
                         if ShowDistance then
                             Distance.Visible = true
                         end
+                        if ShowTracers then
+                            Tracer.Visible = true
+                            TracerOutline.Visible = true
+                        end
 
                         ESPElementsList[#ESPElementsList+1] = BoxOutline
                         ESPElementsList[#ESPElementsList+1] = Box
@@ -561,30 +570,9 @@ EspSection:NewToggle("Enabled", "", function(state)
                         ESPElementsList[#ESPElementsList+1] = HealthBarOBJ
                         ESPElementsList[#ESPElementsList+1] = Name
                         ESPElementsList[#ESPElementsList+1] = Distance
+                        ESPElementsList[#ESPElementsList+1] = Tracer
+                        ESPElementsList[#ESPElementsList+1] = TracerOutline
                     end
-
-                    TracerOutline = Drawing.new("Line")
-                    TracerOutline.Visible = false
-                    TracerOutline.Transparency = ESPTransparency
-                    TracerOutline.Thickness = 2
-                    TracerOutline.Color = Color3.fromRGB(0, 0, 0)
-                    TracerOutline.To = Vector2.new(((Box.Size.X / 2) + Box.Position.X), (ScreenPosition.Y + Box.Size.Y / 2))
-                    TracerOutline.From = Vector2.new((camera.ViewportSize.X/2), camera.ViewportSize.Y)
-
-                    Tracer = Drawing.new("Line")
-                    Tracer.Visible = false
-                    Tracer.Transparency = ESPTransparency
-                    Tracer.Thickness = 1
-                    Tracer.Color = MainESPColor
-                    Tracer.To = TracerOutline.To
-                    Tracer.From = TracerOutline.From
-
-                    if ShowTracers then
-                        Tracer.Visible = true
-                        TracerOutline.Visible = true
-                    end
-                    ESPElementsList[#ESPElementsList+1] = Tracer
-                    ESPElementsList[#ESPElementsList+1] = TracerOutline
                 end
             end
         end)
