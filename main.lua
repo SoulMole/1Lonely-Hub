@@ -1,5 +1,3 @@
-
-
 if getgenv().LonelyHub_PF then return end
 getgenv().LonelyHub_PF = true
 
@@ -10,7 +8,7 @@ else
     DevMode = false
 end
 
-local Version = "1.4"
+local Version = "1.5"
 if DevMode then Version = Version.." (Dev)" end
 
 getgenv().LonelyHub_PF_Version = Version
@@ -28,6 +26,11 @@ local CoolName = "lonely hub"
 if getgenv().SonnyHub then
     themes.SchemeColor = Color3.fromRGB(243, 120, 49)
     CoolName = "sonny hub"
+end
+
+if getgenv().CharlesHub then
+    themes.SchemeColor = Color3.fromRGB(54, 35, 226)
+    CoolName = "charles hub"
 end
 
 
@@ -89,9 +92,11 @@ local FunTab = Window:NewTab("shits'n'giggles")
 local FunSection = FunTab:NewSection("Chatty Bot")
 
 local VisualsTab = Window:NewTab("Visuals")
+local ChamsSection = VisualsTab:NewSection("Chams Settings")
+local ChamsOptionSection = VisualsTab:NewSection("Chams Exta")
 local EspSection = VisualsTab:NewSection("ESP Settings")
 local EspOptionsSection = VisualsTab:NewSection("ESP Extras")
-local ESPColorSection = VisualsTab:NewSection("ESP Colors")
+local ESPColorSection = VisualsTab:NewSection("Visuals Colors")
 
 local BindsTab = Window:NewTab("Key Binds")
 local BindsSection = BindsTab:NewSection("Key Binds")
@@ -599,15 +604,15 @@ end)
 EspOptionsSection:NewToggle("Show Distance", "Shows the distance under the player", function(state)
     ShowDistance = state
 end)
-EspOptionsSection:NewToggle("Show Teammates", "Shows team mates", function(state)
-    ShowTeam = state
-end)
+-- EspOptionsSection:NewToggle("Show Teammates", "Shows team mates", function(state)
+--     ShowTeam = state
+-- end)
 ESPColorSection:NewColorPicker("Enemy Color", "The box around the enemies color", themes.SchemeColor, function(color)
     ESPColor = color
 end)
-ESPColorSection:NewColorPicker("Team Color", "The box around the enemies color", Color3.fromRGB(68, 255, 162), function(color)
-    TeamColor = color
-end)
+-- ESPColorSection:NewColorPicker("Team Color", "The box around the enemies color", Color3.fromRGB(68, 255, 162), function(color)
+--     TeamColor = color
+-- end)
 ESPColorSection:NewColorPicker("Font Color", "The font color of the name and distance.", Color3.fromRGB(255, 255, 255), function(color)
     FontColor = color
 end)
@@ -745,11 +750,11 @@ local chatidx, consoleidx
 for i,v in pairs(networkfuncs) do
 local constants = debug.getconstants(v)
 
-if (table.find(constants, "Tag") and table.find(constants, "$")) then
+if ((table.find(constants, "Tag") and table.find(constants, "$")) and ChatBotOn) then
     chatidx = i
 end
 
-if (table.find(constants, "[Console]: ")) then
+if (table.find(constants, "[Console]: ") and ChatBotOn) then
     consoleidx = i
 end
 end
@@ -759,12 +764,13 @@ local lastmessage
 local oldchatted = networkfuncs[chatidx]
 networkfuncs[chatidx] = function(player, msg, ...)
 oldchatted(player, msg, ...)
-task.delay(1.5, function()
+task.delay(0.5, function()
     if (player ~= localplayer) then
         local message
-
-        if (msg == "!help" and ChatBotOn) then
-            message = "[BOT] My commands are: !verse or !amen"
+        if ((msg == "hacker" or msg == "cheaters") and ChatBotOn) then
+            message = "[BOT] My commands are: !verse, !amen"
+        elseif (msg == "!help" and ChatBotOn) then
+            message = "[BOT] My commands are: !verse, !amen"
         elseif (msg == "!verse" and ChatBotOn) then
             message = "[BOT] "..Verses[math.random(#Verses)]
         elseif (msg == "!amen" and ChatBotOn) then
@@ -785,12 +791,12 @@ end
 local oldconsolechatted = networkfuncs[consoleidx]
 networkfuncs[consoleidx] = function(...)
 oldconsolechatted(...)
-network:send("chatted", "[BOT] we get it console, only i get to be a bot")
+network:send("chatted", "[BOT] we get it console, no need to brag your a smarter bot >;<")
 end
 
-FunSection:NewToggle("Chat Bot", "creates a chat bot", function(state)
+FunSection:NewToggle("Bible Bot", "enables the bible chat bot", function(state)
     if state then
-        network:send("chatted", "[BOT] Hey guy's, I'm a lonelyhub bot, best in the business")
+        network:send("chatted", "[BOT] Hey guy's, I'm a lonelyhub chat bot, best in the business")
         wait()
         network:send("chatted", "[BOT] For a list of commands, type !help")
     else
@@ -798,6 +804,293 @@ FunSection:NewToggle("Chat Bot", "creates a chat bot", function(state)
     end
 end)
 
+local function getTeam()
+    local localPlayerGhostsTeamName = "Ghosts"
+    local playerFolderGhostsTeamName = "Bright orange"
+    local playerFolderPhantomsTeamName = "Bright blue"
+    
+    if game.Players.LocalPlayer.Team.Name == localPlayerGhostsTeamName then return playerFolderPhantomsTeamName else return playerFolderGhostsTeamName end
+end
+
+local ChamsEnabled = false
+ChamsList = {}
+local team = getTeam()
+
+game.Workspace.Players:FindFirstChild(team).ChildAdded:Connect(function(Player)
+    
+end)
+
+local InlineAlwaysOnTop = true
+local InlineColor = Color3.fromRGB(170,170,170)
+local OutlineColor = themes.SchemeColor
+local ChamsEnabled = true
+
+ChamsSection:NewToggle("Enabled", "Enables the chams", function(state)
+    if state then
+        local client = {}; do
+            for i,v in pairs(getgc(true)) do
+                if (type(v) == "table") then
+                    if rawget(v, "getbodyparts") then
+                        client.chartable = debug.getupvalue(v.getbodyparts, 1)
+                    end
+                end
+            end
+         end
+         
+         local count = 0
+         
+         RunService:BindToRenderStep("ChamsLoop", 1, function()
+             if count < 60 then
+                 count = count + 1
+             else
+                 count = 0
+             end
+             for i,v in pairs(game.Players:GetPlayers()) do
+                 if (v and client.chartable[v]) then
+                     local char = client.chartable[v]
+                     char.head.Parent.Name = v.Name
+                     v.Character = char.head.Parent
+                 end
+             end
+         end)
+         
+         local function ApplyCham()
+             for i, v in pairs(game.Players:GetPlayers()) do
+                 if (v.Character ~= nil) then
+                     if (v.Character:FindFirstChild("Torso")) then
+                         if (v.Name ~= game.Players.LocalPlayer.Name and v.Team ~= game.Players.LocalPlayer.Team) then
+                             if (not v.Character.Head:FindFirstChildOfClass("CylinderHandleAdornment" or "BoxHandleAdornment")) then
+                                 -- Head and Torso
+                                 local Head = v.Character["Head"]
+                                 local Torso = v.Character["Torso"]
+                             
+                                 -- Arms
+                                 local LeftArm = v.Character["Left Arm"]
+                                 local RightArm = v.Character["Right Arm"]
+                             
+                                 -- Legs
+                                 local LeftLeg = v.Character["Left Leg"]
+                                 local RightLeg = v.Character["Right Leg"]
+                             
+                                 -- Head
+                                 local HeadInline = Instance.new("CylinderHandleAdornment", Head)
+                                 local HeadOutline = Instance.new("CylinderHandleAdornment", Head)
+                             
+                                 -- Torso
+                                 local TorsoInline = Instance.new("BoxHandleAdornment", Torso)
+                                 local TorsoOutline = Instance.new("BoxHandleAdornment", Torso)
+                             
+                                 -- Left Arm
+                                 local LeftArmInline = Instance.new("BoxHandleAdornment", LeftArm)
+                                 local LeftArmOutline = Instance.new("BoxHandleAdornment", LeftArm)
+          
+                                 -- Right Arm
+                                 local RightArmInline = Instance.new("BoxHandleAdornment", RightArm)
+                                 local RightArmOutline = Instance.new("BoxHandleAdornment", RightArm)
+          
+                                 -- Left Leg
+                                 local LeftLegInline = Instance.new("BoxHandleAdornment", LeftLeg)
+                                 local LeftLegOutline = Instance.new("BoxHandleAdornment", LeftLeg)
+          
+                                 -- Right Leg
+                                 local RightLegInline = Instance.new("BoxHandleAdornment", RightLeg)
+                                 local RightLegOutline = Instance.new("BoxHandleAdornment", RightLeg)
+          
+                                 -- Head
+                                 HeadInline.Name = "Cham Inline"
+                                 HeadInline.Color3 = InlineColor
+                                 HeadInline.Radius = Head.Size.X / 2 + 0.15
+                                 HeadInline.Height = Head.Size.Y + 0.3
+                                 HeadInline.CFrame = CFrame.new(Vector3.new(), Vector3.new(0,1,0))
+                                 HeadInline.Adornee = Head
+                                 HeadInline.Transparency = 0.75
+                                 HeadInline.ZIndex = 2
+                                 HeadInline.AlwaysOnTop = InlineAlwaysOnTop
+                        
+                                 HeadOutline.Name = "Cham Outline"
+                                 HeadOutline.Color3 = OutlineColor
+                                 HeadOutline.Radius = Head.Size.X / 2 + 0.2
+                                 HeadOutline.Height = Head.Size.Y + 0.35
+                                 HeadOutline.Transparency = 0.55
+                                 HeadOutline.CFrame = CFrame.new(Vector3.new(), Vector3.new(0,1,0))
+                                 HeadOutline.Adornee = Head
+                                 HeadOutline.ZIndex = 2
+                        
+                                 -- Torso
+                                 TorsoInline.Name = "Cham Inline"
+                                 TorsoInline.Color3 = InlineColor
+                                 TorsoInline.Size = Torso.Size + Vector3.new(0.05, 0.05, 0.05)
+                                 TorsoInline.Transparency = 0.75
+                                 TorsoInline.Adornee = Torso
+                                 TorsoInline.ZIndex = 2
+                                 TorsoInline.AlwaysOnTop = InlineAlwaysOnTop
+                         
+                                 TorsoOutline.Name = "Cham Outline"
+                                 TorsoOutline.Color3 = OutlineColor
+                                 TorsoOutline.Size = Torso.Size + Vector3.new(0.1, 0.1, 0.1)
+                                 TorsoOutline.Transparency = 0.55
+                                 TorsoOutline.Adornee = Torso
+                                 TorsoOutline.ZIndex = 2
+                         
+                                 -- Left Arm
+                                 LeftArmInline.Name = "Cham Inline"
+                                 LeftArmInline.Color3 = InlineColor
+                                 LeftArmInline.Size = LeftArm.Size + Vector3.new(0.05, 0.05, 0.05)
+                                 LeftArmInline.Transparency = 0.75
+                                 LeftArmInline.Adornee = LeftArm
+                                 LeftArmInline.ZIndex = 2
+                                 LeftArmInline.AlwaysOnTop = InlineAlwaysOnTop
+                         
+                                 LeftArmOutline.Name = "Cham Outline"
+                                 LeftArmOutline.Color3 = OutlineColor
+                                 LeftArmOutline.Size = LeftArm.Size + Vector3.new(0.1, 0.1, 0.1)
+                                 LeftArmOutline.Transparency = 0.55
+                                 LeftArmOutline.Adornee = LeftArm
+                                 LeftArmOutline.ZIndex = 2
+          
+                                 -- Right Arm
+                                 RightArmInline.Name = "Cham Inline"
+                                 RightArmInline.Color3 = InlineColor
+                                 RightArmInline.Size = RightArm.Size + Vector3.new(0.05, 0.05, 0.05)
+                                 RightArmInline.Transparency = 0.75
+                                 RightArmInline.Adornee = RightArm
+                                 RightArmInline.ZIndex = 2
+                                 RightArmInline.AlwaysOnTop = InlineAlwaysOnTop
+           
+                                 RightArmOutline.Name = "Cham Outline"
+                                 RightArmOutline.Color3 = OutlineColor
+                                 RightArmOutline.Size = RightArm.Size + Vector3.new(0.1, 0.1, 0.1)
+                                 RightArmOutline.Transparency = 0.55
+                                 RightArmOutline.Adornee = RightArm
+                                 RightArmOutline.ZIndex = 2
+          
+                                 -- Left Leg
+                                 LeftLegInline.Name = "Cham Inline"
+                                 LeftLegInline.Color3 = InlineColor
+                                 LeftLegInline.Size = LeftLeg.Size + Vector3.new(0.05, 0.05, 0.05)
+                                 LeftLegInline.Transparency = 0.75
+                                 LeftLegInline.Adornee = LeftLeg
+                                 LeftLegInline.ZIndex = 2
+                                 LeftLegInline.AlwaysOnTop = InlineAlwaysOnTop
+          
+                                 LeftLegOutline.Name = "Cham Outline"
+                                 LeftLegOutline.Color3 = OutlineColor
+                                 LeftLegOutline.Size = LeftLeg.Size + Vector3.new(0.1, 0.1, 0.1)
+                                 LeftLegOutline.Transparency = 0.55
+                                 LeftLegOutline.Adornee = LeftLeg
+                                 LeftLegOutline.ZIndex = 2
+         
+                                 -- Right Leg
+                                 RightLegInline.Name = "Cham Inline"
+                                 RightLegInline.Color3 = InlineColor
+                                 RightLegInline.Size = RightLeg.Size + Vector3.new(0.05, 0.05, 0.05)
+                                 RightLegInline.Transparency = 0.75
+                                 RightLegInline.Adornee = RightLeg
+                                 RightLegInline.ZIndex = 2
+                                 RightLegInline.AlwaysOnTop = InlineAlwaysOnTop
+          
+                                 RightLegOutline.Name = "Cham Outline"
+                                 RightLegOutline.Color3 = OutlineColor
+                                 RightLegOutline.Size = RightLeg.Size + Vector3.new(0.1, 0.1, 0.1)
+                                 RightLegOutline.Transparency = 0.55
+                                 RightLegOutline.Adornee = RightLeg
+                                 RightLegOutline.ZIndex = 2
+                                 
+                                 if (v.Character.Cosmetics ~= nil) then
+                                     for i, v in pairs(v.Character.Cosmetics:GetChildren()) do
+                                         v:Destroy()
+                                     end
+                                  end
+                             end
+                         end
+                     end
+                 end
+             end
+         end
+         
+         local GhostsEvent = game.Workspace.Players["Bright orange"].ChildAdded:Connect(function(Player)
+             if ChamsEnabled then
+                 if tostring(game.Players.LocalPlayer.Team) == "Phantoms" then
+                     repeat wait() until Player and Player:FindFirstChild("Torso")
+                     ApplyCham()
+                 end
+             end
+         end)
+         local PhantomsEvent = game.Workspace.Players["Bright blue"].ChildAdded:Connect(function(Player)
+             if ChamsEnabled then
+                 if tostring(game.Players.LocalPlayer.Team) == "Ghosts" then
+                     repeat wait() until Player and Player:FindFirstChild("Torso")
+                     ApplyCham()
+                 end
+             end
+         end)
+         
+         local DeadBodyEvent = game.Workspace.Ignore.DeadBody.ChildAdded:Connect(function(Body)
+             for i,part in pairs(Body:GetChildren()) do
+                 if part:FindFirstChildOfClass("CylinderHandleAdornment") then
+                     for i,cham in pairs(part:GetChildren()) do
+                         if(cham:IsA("CylinderHandleAdornment")) then
+                             cham:Destroy()
+                         end
+                     end
+                 elseif part:FindFirstChildOfClass("BoxHandleAdornment") then
+                     for i,cham in pairs(part:GetChildren()) do
+                         if(cham:IsA("BoxHandleAdornment")) then
+                             cham:Destroy()
+                         end
+                     end
+                 end
+             end
+         end)
+    else
+        RunService:UnbindFromRenderStep("ChamsLoop")
+        ChamsEnabled = false
+
+        for i,player in pairs(game.Workspace.Players["Bright blue"]:GetChildren()) do
+            for i,part in pairs(player:GetChildren()) do
+                if part:FindFirstChildOfClass("CylinderHandleAdornment") then
+                    for i,cham in pairs(part:GetChildren()) do
+                        if(cham:IsA("CylinderHandleAdornment")) then
+                            cham:Destroy()
+                        end
+                    end
+                elseif part:FindFirstChildOfClass("BoxHandleAdornment") then
+                    for i,cham in pairs(part:GetChildren()) do
+                        if(cham:IsA("BoxHandleAdornment")) then
+                            cham:Destroy()
+                        end
+                    end
+                end
+            end
+        end
+
+        for i,player in pairs(game.Workspace.Players["Bright orange"]:GetChildren()) do
+            for i,part in pairs(player:GetChildren()) do
+                if part:FindFirstChildOfClass("CylinderHandleAdornment") then
+                    for i,cham in pairs(part:GetChildren()) do
+                        if(cham:IsA("CylinderHandleAdornment")) then
+                            cham:Destroy()
+                        end
+                    end
+                elseif part:FindFirstChildOfClass("BoxHandleAdornment") then
+                    for i,cham in pairs(part:GetChildren()) do
+                        if(cham:IsA("BoxHandleAdornment")) then
+                            cham:Destroy()
+                        end
+                    end
+                end
+            end
+        end
+    end
+end)
+
+ChamsOptionSection:NewColorPicker("Always Color", "The color of the inline chams", InlineColor, function(color)
+    InlineColor = color
+end)
+
+ChamsOptionSection:NewColorPicker("Visible Color", "The color of the outline chams", OutlineColor, function(color)
+    OutlineColor = color
+end)
 
 if DevMode then
     local DevTab = Window:NewTab("Dev")
