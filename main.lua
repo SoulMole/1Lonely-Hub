@@ -721,16 +721,29 @@ local ChatBotOn = true
 local localplayer = game:GetService("Players").LocalPlayer
     
 local Verses = {
-'John 16:33, "So do not fear, for I am with you; do not be dismayed, for I am your God. I will strengthen you and help you; I will uphold you with my righteous right hand."',
-'Romans 8:28, "And we know that for those who love God all things work together for good, for those who are called according to His purpose."',
-'Joshua 1:9, "Have I not commanded you? Be strong and courageous. Do not be frightened, and do not be dismayed, for the LORD your God is with you wherever you go."',
-'Proverbs 3:5–6, "Trust in the LORD with all your heart, and do not learn on your own understanding. In all your ways acknowledge Him, and He will make straight your paths."',
-'Isaiah 41:13, "For I, the LORD your God, hold your right hand; it is I who say to you, Fear not, I am the one who helps you."',
-'Peter 5:6–7, "Humble yourselves, therefore, under the mighty hand of God so that at the proper time He may exalt you, casting all your anxieties on Him, because He cares for you."',
-'John 1:9, "If we confess our sins, He is faithful and just to forgive us our sins and to cleanse us from all unrighteousness."',
-'John 2:1-2, "My little children, these things I write to you, so that you may not sin. And if anyone sins, we have an Advocate with the Father, Jesus Christ the righteous. And He Himself is the propitiation for our sins, and not for ours only but also for the whole world."',
-'Psalm 94:18–19, "When I thought, "My foot slips," Your steadfast love, O LORD, helped me up. When the cares of my heart are many, Your consolations cheer my soul."',
+    'John 16:33, "So do not fear, for I am with you; do not be dismayed, for I am your God. I will strengthen you and help you; I will uphold you with my righteous right hand."',
+    'Romans 8:28, "And we know that for those who love God all things work together for good, for those who are called according to His purpose."',
+    'Joshua 1:9, "Have I not commanded you? Be strong and courageous. Do not be frightened, and do not be dismayed, for the LORD your God is with you wherever you go."',
+    'Proverbs 3:5–6, "Trust in the LORD with all your heart, and do not learn on your own understanding. In all your ways acknowledge Him, and He will make straight your paths."',
+    'Isaiah 41:13, "For I, the LORD your God, hold your right hand; it is I who say to you, Fear not, I am the one who helps you."',
+    'Peter 5:6–7, "Humble yourselves, therefore, under the mighty hand of God so that at the proper time He may exalt you, casting all your anxieties on Him, because He cares for you."',
+    'John 1:9, "If we confess our sins, He is faithful and just to forgive us our sins and to cleanse us from all unrighteousness."',
+    'John 2:1-2, "My little children, these things I write to you, so that you may not sin. And if anyone sins, we have an Advocate with the Father, Jesus Christ the righteous. And He Himself is the propitiation for our sins, and not for ours only but also for the whole world."',
+    'Psalm 94:18–19, "When I thought, "My foot slips," Your steadfast love, O LORD, helped me up. When the cares of my heart are many, Your consolations cheer my soul."',
 }
+
+local EightBalls = {
+    'The 8ball says: Yes... acutally maybe not',
+    'The 8ball says: No.',
+    'The 8ball says: Maybe, you never know ¯\\_(ツ)_/¯',
+    "The 8ball says: I don\'t know",
+    'The 8ball says: Google knows',
+    'The 8ball says: Ofc not',
+    'The 8ball says: Possibly',
+    'The 8ball says: hey siri, yes or no?. siri says no',
+    'The 8ball says: hey siri, yes or no?. siri says yes',
+}
+
 local network
 
 for i,v in pairs(getgc(true)) do
@@ -773,6 +786,8 @@ task.delay(0.5, function()
             message = "[BOT] My commands are: !verse, !amen"
         elseif (msg == "!verse" and ChatBotOn) then
             message = "[BOT] "..Verses[math.random(#Verses)]
+        elseif (msg == "!8ball" and ChatBotOn) then
+            message = "[BOT] "..EightBalls[math.random(#Verses)]
         elseif (msg == "!amen" and ChatBotOn) then
             message = "[BOT] amen, " .. player.Name .. "!"
         end
