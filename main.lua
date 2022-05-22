@@ -8,7 +8,7 @@ else
     DevMode = false
 end
 
-local Version = "1.6"
+local Version = "1.7"
 if DevMode then Version = Version.." (Dev)" end
 
 getgenv().LonelyHub_PF_Version = Version
@@ -780,14 +780,12 @@ oldchatted(player, msg, ...)
 task.delay(0.5, function()
     if (player ~= localplayer) then
         local message
-        if ((msg == "hacker" or msg == "cheaters") and ChatBotOn) then
-            message = "[BOT] My commands are: !verse, !amen"
-        elseif (msg == "!help" and ChatBotOn) then
-            message = "[BOT] My commands are: !verse, !amen"
+        if (msg == "!help" and ChatBotOn) then
+            message = "[BOT] My commands are: !8ball, !verse, !amen"
         elseif (msg == "!verse" and ChatBotOn) then
             message = "[BOT] "..Verses[math.random(#Verses)]
-        elseif (msg == "!8ball" and ChatBotOn) then
-            message = "[BOT] "..EightBalls[math.random(#Verses)]
+        elseif (string.starts(msg, "!8ball") and ChatBotOn) then
+            message = "[BOT] "..EightBalls[math.random(#EightBalls)]
         elseif (msg == "!amen" and ChatBotOn) then
             message = "[BOT] amen, " .. player.Name .. "!"
         end
