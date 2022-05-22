@@ -8,7 +8,7 @@ else
     DevMode = false
 end
 
-local Version = "1.5"
+local Version = "1.6"
 if DevMode then Version = Version.." (Dev)" end
 
 getgenv().LonelyHub_PF_Version = Version
