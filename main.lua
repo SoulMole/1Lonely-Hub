@@ -1,3 +1,5 @@
+
+
 if getgenv().LonelyHub_PF then return end
 getgenv().LonelyHub_PF = true
 
@@ -8,7 +10,7 @@ else
     DevMode = false
 end
 
-local Version = "1.5"
+local Version = "1.4"
 if DevMode then Version = Version.." (Dev)" end
 
 getgenv().LonelyHub_PF_Version = Version
@@ -83,6 +85,9 @@ local CombatSection = CombatTab:NewSection("Combat")
 local MovementTab = Window:NewTab("Movement")
 local MovementSection = MovementTab:NewSection("Movement")
 
+local FunTab = Window:NewTab("shits'n'giggles")
+local FunSection = FunTab:NewSection("Chatty Bot")
+
 local VisualsTab = Window:NewTab("Visuals")
 local EspSection = VisualsTab:NewSection("ESP Settings")
 local EspOptionsSection = VisualsTab:NewSection("ESP Extras")
@@ -126,14 +131,6 @@ local wallCheck = false
 local maxWalls = 0
 local abTargetPart = "Head"
 local FOVringList = {}
-
-local function isPointVisible2(targetForWallCheck, mw)
-    local castPoints = {targetForWallCheck.Position}
-    local ignoreList = {targetForWallCheck, game.Players.LocalPlayer.Character, game.Workspace.CurrentCamera}
-    local result = workspace.CurrentCamera:GetPartsObscuringTarget(castPoints, ignoreList)
-    
-    return #result <= mw
-end
 
 local function isPointVisible(targetForWallCheck, mw)
     local castPoints = {targetForWallCheck.PrimaryPart.Position}
@@ -422,7 +419,7 @@ function SizeRound(Number, Bracket)
 end
 -- End ESP Functions
 
-local ESPTransparency = 0.1
+local ESPTransparency = 1
 local ShowHealthBar = false
 local ShowTracers = false
 local ShowName = false
@@ -460,6 +457,7 @@ EspSection:NewToggle("Enabled", "", function(state)
                 if BodyParts and PlayerAlive and Health and IsEnemy then
                     local HealthPercent = (Health.CurrentHealth / Health.MaxHealth)
                     local ClientDistance = GetDistanceFromClient(BodyParts.Root.Position)
+---@diagnostic disable-next-line: undefined-global
                     ScreenPosition, OnScreen = GetScreenPosition(BodyParts.Root.Position)
                     local Orientation, Size = BodyParts.Character:GetBoundingBox()
                     local Height = (Workspace.CurrentCamera.CFrame - Workspace.CurrentCamera.CFrame.Position) * Vector3.new(0, (math.clamp(Size.Y, 1, 10) + 0.5) / 2, 0)
@@ -585,9 +583,9 @@ EspSection:NewToggle("Enabled", "", function(state)
     end
 end)
 
-EspSection:NewSlider("ESP Transparency", "How transparent the esp elements are ", 100, 10, function(val)
-    ESPTransparency = val / 100
-end)
+-- EspSection:NewSlider("ESP Transparency", "How transparent the esp elements are ", 100, 10, function(val)
+--     ESPTransparency = val / 100
+-- end)
 
 EspOptionsSection:NewToggle("Show Health", "Shows a health bar on the left of the player", function(state)
     ShowHealthBar = state
@@ -631,6 +629,7 @@ function EditGunMods()
     }
     
     for i, s in pairs(game:GetService("ReplicatedStorage").GunModules:GetChildren()) do
+---@diagnostic disable-next-line: undefined-global
         rs = require(s)
         if GunMods.Recoil == true then
             rs.aimrotkickmin = Vector3.new(0, 0, 0)
@@ -711,6 +710,94 @@ MovementSection:NewToggle("Bunny Hop", "Allows to bunny hop like a retard", func
         RunService:UnbindFromRenderStep("BhopLoop")
     end
 end)
+
+local ChatBotOn = true
+
+local localplayer = game:GetService("Players").LocalPlayer
+    
+local Verses = {
+'John 16:33, "So do not fear, for I am with you; do not be dismayed, for I am your God. I will strengthen you and help you; I will uphold you with my righteous right hand."',
+'Romans 8:28, "And we know that for those who love God all things work together for good, for those who are called according to His purpose."',
+'Joshua 1:9, "Have I not commanded you? Be strong and courageous. Do not be frightened, and do not be dismayed, for the LORD your God is with you wherever you go."',
+'Proverbs 3:5–6, "Trust in the LORD with all your heart, and do not learn on your own understanding. In all your ways acknowledge Him, and He will make straight your paths."',
+'Isaiah 41:13, "For I, the LORD your God, hold your right hand; it is I who say to you, Fear not, I am the one who helps you."',
+'Peter 5:6–7, "Humble yourselves, therefore, under the mighty hand of God so that at the proper time He may exalt you, casting all your anxieties on Him, because He cares for you."',
+'John 1:9, "If we confess our sins, He is faithful and just to forgive us our sins and to cleanse us from all unrighteousness."',
+'John 2:1-2, "My little children, these things I write to you, so that you may not sin. And if anyone sins, we have an Advocate with the Father, Jesus Christ the righteous. And He Himself is the propitiation for our sins, and not for ours only but also for the whole world."',
+'Psalm 94:18–19, "When I thought, "My foot slips," Your steadfast love, O LORD, helped me up. When the cares of my heart are many, Your consolations cheer my soul."',
+}
+local network
+
+for i,v in pairs(getgc(true)) do
+if (type(v) == "table") then
+    if (rawget(v, "send")) then
+        network = v
+    end
+end
+end
+
+
+
+local remoteevent = debug.getupvalue(network.send, 1)
+local networkfuncs = debug.getupvalue(getconnections(remoteevent.OnClientEvent)[1].Function, 1)
+local chatidx, consoleidx
+
+for i,v in pairs(networkfuncs) do
+local constants = debug.getconstants(v)
+
+if (table.find(constants, "Tag") and table.find(constants, "$")) then
+    chatidx = i
+end
+
+if (table.find(constants, "[Console]: ")) then
+    consoleidx = i
+end
+end
+
+local lastmessage
+
+local oldchatted = networkfuncs[chatidx]
+networkfuncs[chatidx] = function(player, msg, ...)
+oldchatted(player, msg, ...)
+task.delay(1.5, function()
+    if (player ~= localplayer) then
+        local message
+
+        if (msg == "!help" and ChatBotOn) then
+            message = "[BOT] My commands are: !verse or !amen"
+        elseif (msg == "!verse" and ChatBotOn) then
+            message = "[BOT] "..Verses[math.random(#Verses)]
+        elseif (msg == "!amen" and ChatBotOn) then
+            message = "[BOT] amen, " .. player.Name .. "!"
+        end
+
+        if (message) then
+            if (lastmessage == message) then
+                message = message .. "_"
+            end
+
+            network:send("chatted", message)
+        end
+    end
+end)
+end
+
+local oldconsolechatted = networkfuncs[consoleidx]
+networkfuncs[consoleidx] = function(...)
+oldconsolechatted(...)
+network:send("chatted", "[BOT] we get it console, only i get to be a bot")
+end
+
+FunSection:NewToggle("Chat Bot", "creates a chat bot", function(state)
+    if state then
+        network:send("chatted", "[BOT] Hey guy's, I'm a lonelyhub bot, best in the business")
+        wait()
+        network:send("chatted", "[BOT] For a list of commands, type !help")
+    else
+        network:send("chatted", "[BOT] Peace, im out im shutting dowwnnnn-")
+    end
+end)
+
 
 if DevMode then
     local DevTab = Window:NewTab("Dev")
