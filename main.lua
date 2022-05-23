@@ -68,7 +68,7 @@ local UserInputService = game:GetService("UserInputService")
 local Players = game:GetService("Players")
 local LocalPlayer = game.Players.LocalPlayer
  
-local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/SoulMole/Lonely-Hub-Kavo-UI-Library/main/source.lua"))()
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/SoulMole/Lonely-Hub-Kavo-UI-Library/main/sources.lua"))()
 local Window = Library.CreateLib(CoolName.." | v".. Version, themes)
 
 local SilentAimTab = Window:NewTab("Silent Aim")
